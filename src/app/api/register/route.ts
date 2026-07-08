@@ -22,7 +22,8 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ id: user.id, name: user.name, email: user.email }, { status: 201 });
-  } catch {
+  } catch (e) {
+    console.error("POST /api/register error:", e);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

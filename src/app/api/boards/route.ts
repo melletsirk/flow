@@ -16,7 +16,8 @@ export async function GET() {
     });
 
     return NextResponse.json(boards);
-  } catch {
+  } catch (e) {
+    console.error("GET /api/boards error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
@@ -39,7 +40,8 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(board, { status: 201 });
-  } catch {
+  } catch (e) {
+    console.error("POST /api/boards error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

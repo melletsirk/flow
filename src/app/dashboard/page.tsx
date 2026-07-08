@@ -7,6 +7,9 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user) redirect("/login");
+
   const boards = await prisma.board.findMany({
     where: { ownerId: session.user.id },
     include: { _count: { select: { lists: true } } },

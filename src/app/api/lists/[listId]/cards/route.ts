@@ -39,7 +39,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ listId:
     });
 
     return NextResponse.json(card, { status: 201 });
-  } catch {
+  } catch (e) {
+    console.error("POST /api/lists/[listId]/cards error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

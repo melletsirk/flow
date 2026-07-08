@@ -24,7 +24,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ cardId:
     });
 
     return NextResponse.json(label, { status: 201 });
-  } catch {
+  } catch (e) {
+    console.error("POST /api/cards/[cardId]/labels error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
@@ -48,7 +49,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ cardI
 
     await prisma.label.deleteMany({ where: { id, cardId } });
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (e) {
+    console.error("DELETE /api/cards/[cardId]/labels error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

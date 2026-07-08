@@ -22,7 +22,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ cardId:
 
     if (!card) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(card);
-  } catch {
+  } catch (e) {
+    console.error("GET /api/cards/[cardId] error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
@@ -56,7 +57,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ cardId
     });
 
     return NextResponse.json(updated);
-  } catch {
+  } catch (e) {
+    console.error("PATCH /api/cards/[cardId] error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
@@ -79,7 +81,8 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ card
 
     await prisma.card.delete({ where: { id: cardId } });
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (e) {
+    console.error("DELETE /api/cards/[cardId] error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

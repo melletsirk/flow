@@ -26,7 +26,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ checkl
     });
 
     return NextResponse.json(updated);
-  } catch {
+  } catch (e) {
+    console.error("PATCH /api/checklists/[checklistId] error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
@@ -49,7 +50,8 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ chec
 
     await prisma.checklist.delete({ where: { id: checklistId } });
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (e) {
+    console.error("DELETE /api/checklists/[checklistId] error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

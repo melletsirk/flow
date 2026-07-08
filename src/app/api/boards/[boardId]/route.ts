@@ -35,7 +35,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ boardId
     }
 
     return NextResponse.json(board);
-  } catch {
+  } catch (e) {
+    console.error("GET /api/boards/[boardId] error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
@@ -63,7 +64,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ boardI
     });
 
     return NextResponse.json(updated);
-  } catch {
+  } catch (e) {
+    console.error("PATCH /api/boards/[boardId] error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
@@ -86,7 +88,8 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ boar
 
     await prisma.board.delete({ where: { id: boardId } });
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (e) {
+    console.error("DELETE /api/boards/[boardId] error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

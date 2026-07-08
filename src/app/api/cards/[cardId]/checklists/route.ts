@@ -25,7 +25,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ cardId:
     });
 
     return NextResponse.json(checklist, { status: 201 });
-  } catch {
+  } catch (e) {
+    console.error("POST /api/cards/[cardId]/checklists error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

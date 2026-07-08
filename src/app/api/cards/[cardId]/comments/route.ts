@@ -25,7 +25,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ cardId:
     });
 
     return NextResponse.json(comment, { status: 201 });
-  } catch {
+  } catch (e) {
+    console.error("POST /api/cards/[cardId]/comments error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

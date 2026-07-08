@@ -25,7 +25,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ listId
     });
 
     return NextResponse.json(updated);
-  } catch {
+  } catch (e) {
+    console.error("PATCH /api/lists/[listId] error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
@@ -48,7 +49,8 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ list
 
     await prisma.list.delete({ where: { id: listId } });
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (e) {
+    console.error("DELETE /api/lists/[listId] error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

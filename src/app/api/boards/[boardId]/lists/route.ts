@@ -33,7 +33,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ boardId
     });
 
     return NextResponse.json(list, { status: 201 });
-  } catch {
+  } catch (e) {
+    console.error("POST /api/boards/[boardId]/lists error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
