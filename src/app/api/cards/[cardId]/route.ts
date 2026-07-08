@@ -8,19 +8,23 @@ export async function GET(_req: Request, { params }: { params: Promise<{ cardId:
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { cardId } = await params;
-  const card = await prisma.card.findUnique({
-    where: { id: cardId },
-    include: {
-      labels: true,
-      assignees: true,
-      comments: { include: { user: true }, orderBy: { createdAt: "asc" } },
-      checklists: { include: { items: true } },
-    },
-  });
+  try {
+    const { cardId } = await params;
+    const card = await prisma.card.findFirst({
+      where: { id: cardId, list: { board: { ownerId: session.user.id } } },
+      include: {
+        labels: true,
+        assignees: true,
+        comments: { include: { user: true }, orderBy: { createdAt: "asc" } },
+        checklists: { include: { items: true } },
+      },
+    });
 
-  if (!card) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(card);
+    if (!card) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(card);
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ cardId: string }> }) {
@@ -29,25 +33,32 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ cardId
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { cardId } = await params;
-  const data = await req.json();
+  try {
+    const { cardId } = await params;
+    const data = await req.json();
 
-  if (data.listId) {
-    data.order = data.order ?? 0;
+    const card = await prisma.card.findFirst({
+      where: { id: cardId, list: { board: { ownerId: session.user.id } } },
+    });
+    if (!card) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const updated = await prisma.card.update({
+      where: { id: cardId },
+      data,
+      include: {
+        labels: true,
+        assignees: true,
+        comments: { include: { user: true } },
+        checklists: { include: { items: true } },
+      },
+    });
+
+    return NextResponse.json(updated);
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-
-  const card = await prisma.card.update({
-    where: { id: cardId },
-    data,
-    include: {
-      labels: true,
-      assignees: true,
-      comments: { include: { user: true } },
-      checklists: { include: { items: true } },
-    },
-  });
-
-  return NextResponse.json(card);
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ cardId: string }> }) {
@@ -56,8 +67,19 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ card
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { cardId } = await params;
-  await prisma.card.delete({ where: { id: cardId } });
+  try {
+    const { cardId } = await params;
 
-  return NextResponse.json({ success: true });
+    const card = await prisma.card.findFirst({
+      where: { id: cardId, list: { board: { ownerId: session.user.id } } },
+    });
+    if (!card) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    await prisma.card.delete({ where: { id: cardId } });
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }

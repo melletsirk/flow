@@ -8,21 +8,32 @@ export async function POST(req: Request, { params }: { params: Promise<{ boardId
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { boardId } = await params;
-  const { title } = await req.json();
+  try {
+    const { boardId } = await params;
+    const { title } = await req.json();
 
-  const lastList = await prisma.list.findFirst({
-    where: { boardId },
-    orderBy: { order: "desc" },
-  });
+    const board = await prisma.board.findFirst({
+      where: { id: boardId, ownerId: session.user.id },
+    });
+    if (!board) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
-  const list = await prisma.list.create({
-    data: {
-      title,
-      boardId,
-      order: (lastList?.order ?? -1) + 1,
-    },
-  });
+    const lastList = await prisma.list.findFirst({
+      where: { boardId },
+      orderBy: { order: "desc" },
+    });
 
-  return NextResponse.json(list, { status: 201 });
+    const list = await prisma.list.create({
+      data: {
+        title,
+        boardId,
+        order: (lastList?.order ?? -1) + 1,
+      },
+    });
+
+    return NextResponse.json(list, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }

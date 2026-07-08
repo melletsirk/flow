@@ -8,14 +8,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ listId
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { listId } = await params;
-  const data = await req.json();
-  const list = await prisma.list.update({
-    where: { id: listId },
-    data,
-  });
+  try {
+    const { listId } = await params;
+    const data = await req.json();
 
-  return NextResponse.json(list);
+    const list = await prisma.list.findFirst({
+      where: { id: listId, board: { ownerId: session.user.id } },
+    });
+    if (!list) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const updated = await prisma.list.update({
+      where: { id: listId },
+      data,
+    });
+
+    return NextResponse.json(updated);
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ listId: string }> }) {
@@ -24,8 +36,19 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ list
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { listId } = await params;
-  await prisma.list.delete({ where: { id: listId } });
+  try {
+    const { listId } = await params;
 
-  return NextResponse.json({ success: true });
+    const list = await prisma.list.findFirst({
+      where: { id: listId, board: { ownerId: session.user.id } },
+    });
+    if (!list) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    await prisma.list.delete({ where: { id: listId } });
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }

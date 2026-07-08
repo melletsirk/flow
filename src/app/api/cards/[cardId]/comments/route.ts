@@ -8,13 +8,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ cardId:
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { cardId } = await params;
-  const { text } = await req.json();
+  try {
+    const { cardId } = await params;
+    const { text } = await req.json();
 
-  const comment = await prisma.comment.create({
-    data: { text, cardId, userId: session.user.id },
-    include: { user: true },
-  });
+    const card = await prisma.card.findFirst({
+      where: { id: cardId, list: { board: { ownerId: session.user.id } } },
+    });
+    if (!card) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
-  return NextResponse.json(comment, { status: 201 });
+    const comment = await prisma.comment.create({
+      data: { text, cardId, userId: session.user.id },
+      include: { user: true },
+    });
+
+    return NextResponse.json(comment, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }

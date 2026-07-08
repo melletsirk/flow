@@ -8,13 +8,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ cardId:
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { cardId } = await params;
-  const { title } = await req.json();
+  try {
+    const { cardId } = await params;
+    const { title } = await req.json();
 
-  const checklist = await prisma.checklist.create({
-    data: { title, cardId },
-    include: { items: true },
-  });
+    const card = await prisma.card.findFirst({
+      where: { id: cardId, list: { board: { ownerId: session.user.id } } },
+    });
+    if (!card) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
-  return NextResponse.json(checklist, { status: 201 });
+    const checklist = await prisma.checklist.create({
+      data: { title, cardId },
+      include: { items: true },
+    });
+
+    return NextResponse.json(checklist, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }

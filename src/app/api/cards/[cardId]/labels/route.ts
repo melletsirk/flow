@@ -8,14 +8,25 @@ export async function POST(req: Request, { params }: { params: Promise<{ cardId:
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { cardId } = await params;
-  const { name, color } = await req.json();
+  try {
+    const { cardId } = await params;
+    const { name, color } = await req.json();
 
-  const label = await prisma.label.create({
-    data: { name, color, cardId },
-  });
+    const card = await prisma.card.findFirst({
+      where: { id: cardId, list: { board: { ownerId: session.user.id } } },
+    });
+    if (!card) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
-  return NextResponse.json(label, { status: 201 });
+    const label = await prisma.label.create({
+      data: { name, color, cardId },
+    });
+
+    return NextResponse.json(label, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ cardId: string }> }) {
@@ -24,9 +35,20 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ cardI
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { cardId } = await params;
-  const { id } = await req.json();
-  await prisma.label.deleteMany({ where: { id, cardId } });
+  try {
+    const { cardId } = await params;
+    const { id } = await req.json();
 
-  return NextResponse.json({ success: true });
+    const card = await prisma.card.findFirst({
+      where: { id: cardId, list: { board: { ownerId: session.user.id } } },
+    });
+    if (!card) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    await prisma.label.deleteMany({ where: { id, cardId } });
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }

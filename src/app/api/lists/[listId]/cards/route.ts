@@ -8,27 +8,38 @@ export async function POST(req: Request, { params }: { params: Promise<{ listId:
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { listId } = await params;
-  const { title } = await req.json();
+  try {
+    const { listId } = await params;
+    const { title } = await req.json();
 
-  const lastCard = await prisma.card.findFirst({
-    where: { listId },
-    orderBy: { order: "desc" },
-  });
+    const list = await prisma.list.findFirst({
+      where: { id: listId, board: { ownerId: session.user.id } },
+    });
+    if (!list) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
-  const card = await prisma.card.create({
-    data: {
-      title,
-      listId,
-      order: (lastCard?.order ?? -1) + 1,
-    },
-    include: {
-      labels: true,
-      assignees: true,
-      comments: true,
-      checklists: { include: { items: true } },
-    },
-  });
+    const lastCard = await prisma.card.findFirst({
+      where: { listId },
+      orderBy: { order: "desc" },
+    });
 
-  return NextResponse.json(card, { status: 201 });
+    const card = await prisma.card.create({
+      data: {
+        title,
+        listId,
+        order: (lastCard?.order ?? -1) + 1,
+      },
+      include: {
+        labels: true,
+        assignees: true,
+        comments: true,
+        checklists: { include: { items: true } },
+      },
+    });
+
+    return NextResponse.json(card, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }

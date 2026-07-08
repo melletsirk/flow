@@ -8,13 +8,17 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const boards = await prisma.board.findMany({
-    where: { ownerId: session.user.id },
-    include: { _count: { select: { lists: true } } },
-    orderBy: { updatedAt: "desc" },
-  });
+  try {
+    const boards = await prisma.board.findMany({
+      where: { ownerId: session.user.id },
+      include: { _count: { select: { lists: true } } },
+      orderBy: { updatedAt: "desc" },
+    });
 
-  return NextResponse.json(boards);
+    return NextResponse.json(boards);
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
@@ -23,14 +27,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { title, color } = await req.json();
-  const board = await prisma.board.create({
-    data: {
-      title,
-      color: color || "#2563eb",
-      ownerId: session.user.id,
-    },
-  });
+  try {
+    const { title, color } = await req.json();
+    const board = await prisma.board.create({
+      data: {
+        title,
+        color: color || "#2563eb",
+        ownerId: session.user.id,
+      },
+      include: { _count: { select: { lists: true } } },
+    });
 
-  return NextResponse.json(board, { status: 201 });
+    return NextResponse.json(board, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }

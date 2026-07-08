@@ -8,32 +8,36 @@ export async function GET(_req: Request, { params }: { params: Promise<{ boardId
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { boardId } = await params;
-  const board = await prisma.board.findFirst({
-    where: { id: boardId, ownerId: session.user.id },
-    include: {
-      lists: {
-        orderBy: { order: "asc" },
-        include: {
-          cards: {
-            orderBy: { order: "asc" },
-            include: {
-              labels: true,
-              assignees: true,
-              comments: true,
-              checklists: { include: { items: true } },
+  try {
+    const { boardId } = await params;
+    const board = await prisma.board.findFirst({
+      where: { id: boardId, ownerId: session.user.id },
+      include: {
+        lists: {
+          orderBy: { order: "asc" },
+          include: {
+            cards: {
+              orderBy: { order: "asc" },
+              include: {
+                labels: true,
+                assignees: true,
+                comments: true,
+                checklists: { include: { items: true } },
+              },
             },
           },
         },
       },
-    },
-  });
+    });
 
-  if (!board) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!board) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(board);
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-
-  return NextResponse.json(board);
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ boardId: string }> }) {
@@ -42,14 +46,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ boardI
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { boardId } = await params;
-  const data = await req.json();
-  const board = await prisma.board.updateMany({
-    where: { id: boardId, ownerId: session.user.id },
-    data,
-  });
+  try {
+    const { boardId } = await params;
+    const data = await req.json();
 
-  return NextResponse.json(board);
+    const board = await prisma.board.findFirst({
+      where: { id: boardId, ownerId: session.user.id },
+    });
+    if (!board) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const updated = await prisma.board.update({
+      where: { id: boardId },
+      data,
+    });
+
+    return NextResponse.json(updated);
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ boardId: string }> }) {
@@ -58,10 +74,19 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ boar
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { boardId } = await params;
-  await prisma.board.deleteMany({
-    where: { id: boardId, ownerId: session.user.id },
-  });
+  try {
+    const { boardId } = await params;
 
-  return NextResponse.json({ success: true });
+    const board = await prisma.board.findFirst({
+      where: { id: boardId, ownerId: session.user.id },
+    });
+    if (!board) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    await prisma.board.delete({ where: { id: boardId } });
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }

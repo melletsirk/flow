@@ -2,33 +2,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(req: Request, { params }: { params: Promise<{ checklistId: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const { checklistId } = await params;
-    const { text } = await req.json();
-
-    const checklist = await prisma.checklist.findFirst({
-      where: { id: checklistId, card: { list: { board: { ownerId: session.user.id } } } },
-    });
-    if (!checklist) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    const item = await prisma.checklistItem.create({
-      data: { text, checklistId },
-    });
-
-    return NextResponse.json(item, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
-  }
-}
-
 export async function PATCH(req: Request, { params }: { params: Promise<{ checklistId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -37,7 +10,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ checkl
 
   try {
     const { checklistId } = await params;
-    const { id, checked } = await req.json();
+    const data = await req.json();
 
     const checklist = await prisma.checklist.findFirst({
       where: { id: checklistId, card: { list: { board: { ownerId: session.user.id } } } },
@@ -46,18 +19,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ checkl
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const item = await prisma.checklistItem.update({
-      where: { id },
-      data: { checked },
+    const updated = await prisma.checklist.update({
+      where: { id: checklistId },
+      data,
+      include: { items: true },
     });
 
-    return NextResponse.json(item);
+    return NextResponse.json(updated);
   } catch {
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ checklistId: string }> }) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ checklistId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -65,7 +39,6 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ check
 
   try {
     const { checklistId } = await params;
-    const { id } = await req.json();
 
     const checklist = await prisma.checklist.findFirst({
       where: { id: checklistId, card: { list: { board: { ownerId: session.user.id } } } },
@@ -74,7 +47,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ check
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await prisma.checklistItem.delete({ where: { id } });
+    await prisma.checklist.delete({ where: { id: checklistId } });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
