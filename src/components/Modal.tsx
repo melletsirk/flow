@@ -17,8 +17,14 @@ export default function Modal({
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
-    if (open) document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
+    if (open) {
+      document.addEventListener("keydown", handleKey);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -26,12 +32,12 @@ export default function Modal({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-16"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 pt-12 animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+      <div className="bg-white dark:bg-[#1d2125] rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-top-4 duration-200">
         {children}
       </div>
     </div>
