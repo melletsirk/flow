@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FiPlus } from "react-icons/fi";
 
 export default function AddCardForm({ listId, onAdd }: { listId: string; onAdd: () => void }) {
   const [open, setOpen] = useState(false);
@@ -8,11 +9,16 @@ export default function AddCardForm({ listId, onAdd }: { listId: string; onAdd: 
 
   async function handleSubmit() {
     if (!title.trim()) return;
-    await fetch(`/api/lists/${listId}/cards`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: title.trim() }),
-    });
+    try {
+      const res = await fetch(`/api/lists/${listId}/cards`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim() }),
+      });
+      if (!res.ok) console.error("AddCard handleSubmit failed:", res.status);
+    } catch (err) {
+      console.error("AddCard handleSubmit network error:", err);
+    }
     setTitle("");
     setOpen(false);
     onAdd();
@@ -22,9 +28,10 @@ export default function AddCardForm({ listId, onAdd }: { listId: string; onAdd: 
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full text-left text-sm text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded px-2 py-1.5 transition-colors"
+        className="w-full text-left text-sm text-white/50 hover:text-white/80 hover:bg-white/10 rounded-lg px-2 py-1.5 transition-colors flex items-center gap-2"
       >
-        + Add card
+        <FiPlus size={14} />
+        Add card
       </button>
     );
   }
@@ -40,13 +47,19 @@ export default function AddCardForm({ listId, onAdd }: { listId: string; onAdd: 
           if (e.key === "Escape") { setOpen(false); setTitle(""); }
         }}
         placeholder="Enter card title"
-        className="w-full border border-zinc-300 dark:border-zinc-600 rounded px-3 py-2 bg-white dark:bg-zinc-800 text-sm"
+        className="w-full border-0 rounded-lg px-3 py-2 bg-white dark:bg-[#1d2125] text-sm text-[#172b4d] dark:text-[#b6c2cf] placeholder-[#626f86] focus:outline-2 focus:outline-[#388bff]"
       />
       <div className="flex gap-2">
-        <button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm">
+        <button
+          onClick={handleSubmit}
+          className="bg-[#579dff] hover:bg-[#388bff] text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+        >
           Add
         </button>
-        <button onClick={() => { setOpen(false); setTitle(""); }} className="text-zinc-500 hover:text-zinc-700 text-sm">
+        <button
+          onClick={() => { setOpen(false); setTitle(""); }}
+          className="text-white/70 hover:text-white px-2 py-1.5 text-sm transition-colors"
+        >
           Cancel
         </button>
       </div>
